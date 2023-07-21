@@ -6,3 +6,12 @@ api:
   debug_mode: "True"
   host: 'localhost'
   port: 8002
+
+vehicle_config:
+  confidence_score: 0.55
+  non_maxima_suppression_threshold: 0.65
+  max_detection: 1000
+  weights_path: "models/best.pt"
+  device: 'cpu'
+  image_size: 640
+  show_results: False
