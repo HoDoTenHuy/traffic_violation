@@ -1,10 +1,19 @@
+import os
 import cv2
+import time
 import logging
 
+from bytetracker import BYTETracker
+from utils.common import draw_tracking
+from exceptiongroup._formatting import _
 from utils.VideoPlayer import VideoPlayer
 from helpers.detector import VehicleDetectionHelper
+from utils.constants import POSITION_FPS, THICKNESS, COLOR_RED
+
 
 logger = logging.getLogger(__name__)
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 class VehicleTracker:
@@ -12,14 +21,15 @@ class VehicleTracker:
         self.frame_id = 0
         self.violators_count = 0
         self.vehicle_count = 0
+        self.start_time = 0
         self.config = config
         self.vehicle_detection_helper = VehicleDetectionHelper(self.config)
         if self.config:
             try:
-                self.conf_thresh = self.config.get('Detection').get('confidence_score')
-                self.nms_thresh = self.config.get('Detection').get('non_maxima_suppression_threshold')
-                self.skip_frame = self.config.get('Setting').get('skip_frame')
-                self.video_output = self.config.get('Video').get('video_output')
+                self.conf_thresh = self.config.get('confidence_score')
+                self.nms_thresh = self.config.get('non_maxima_suppression_threshold')
+                self.skip_frame = self.config.get('skip_frame')
+                self.video_output = self.config.get('video_output')
             except KeyError as e:
                 logger.critical('event={} message="{}"'.format('load-config-failure',
                                                                'The config file is invalid: {}'.format(e)))
@@ -33,11 +43,31 @@ class VehicleTracker:
             logger.error('event={} message="{}"'.format('load-video-failure', 'The video not found!'))
             exit(-1)
 
-        video_writer = await self.__init_writer(fps=camera_player.fps, w=camera_player.width, h=camera_player.height)
+        tracker = BYTETracker()
 
-    async def __init_writer(self, fps, w, h):
-        video_writer = cv2.VideoWriter(self.video_output, cv2.VideoWriter_fourcc(*'FMP4'), fps, (w, h))
-        return video_writer
+        while True:
+            grabbed, frame = camera_player.get_frame()
+
+            if not grabbed:
+                break
+
+            if self.frame_id % self.skip_frame == 0:
+                self.start_time = time.time()
+                outputs = await self.vehicle_detection_helper.detect(frame)
+                dets = outputs[0]
+                dets = dets.boxes.data.cpu()
+                online_targets = tracker.update(dets, _)
+
+                frame = draw_tracking(frame, online_targets)
+
+                cv2.putText(frame, 'FPS: %0.2f' % (1.0 / (time.time() - self.start_time)), POSITION_FPS,
+                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 0.8, COLOR_RED, thickness=THICKNESS, lineType=cv2.LINE_4)
+                cv2.imshow('frame', frame)
+
+            cv_key = cv2.waitKey(1)
+            if cv_key is ord('q'):
+                break
+        cv2.destroyAllWindows()
 
     async def tear_down(self):
         self.frame_id = 0

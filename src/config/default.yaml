@@ -12,6 +12,8 @@ vehicle_config:
   non_maxima_suppression_threshold: 0.65
   max_detection: 1000
   weights_path: "models/best.pt"
-  device: 'cpu'
+  device: 0
   image_size: 640
   show_results: False
+  skip_frame: 1
+  video_output: "models/output.mp4"

@@ -1,9 +1,12 @@
+import os
 import logging
 
 from ultralytics import YOLO
 from bytetracker import BYTETracker
 
 logger = logging.getLogger(__name__)
+
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 class VehicleDetectionHelper:
