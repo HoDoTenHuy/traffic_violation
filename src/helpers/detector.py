@@ -2,14 +2,13 @@ import os
 import logging
 
 from ultralytics import YOLO
-from bytetracker import BYTETracker
 
 logger = logging.getLogger(__name__)
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-class VehicleDetectionHelper:
+class ObjectDetectionHelper:
     def __init__(self, config: dict) -> None:
         self.config = config
         if self.config:
@@ -32,7 +31,7 @@ class VehicleDetectionHelper:
         model = YOLO(self.weights_path)
         return model
 
-    async def detect(self, image):
+    def detect(self, image):
         outputs = self.model.predict(image, show=self.show, imgsz=self.input_shape,
                                      conf=self.conf_thresh, iou=self.iou, device=self.device)
         return outputs

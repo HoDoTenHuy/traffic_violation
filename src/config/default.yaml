@@ -4,10 +4,10 @@ api:
   description: "Mention some high level description about API Functionality"
   version: "0.0.1"
   debug_mode: "True"
-  host: 'localhost'
+  host: '127.0.0.10'
   port: 8002
 
-vehicle_config:
+object_config:
   confidence_score: 0.55
   non_maxima_suppression_threshold: 0.65
   max_detection: 1000
@@ -17,3 +17,9 @@ vehicle_config:
   show_results: False
   skip_frame: 1
   video_output: "models/output.mp4"
+
+streaming:
+  image_encode_extension: 'jpeg'
+  timeout: 15 # time to kill thread with inactivity
+  interval_time: 3600 # seconds
+  max_camera: 16
